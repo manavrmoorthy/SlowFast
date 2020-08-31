@@ -91,7 +91,7 @@ class ResNetRoIHead(nn.Module):
 
         # Softmax for evaluation and testing.
         if act_func == "softmax":
-            self.act = nn.Softmax(dim=1)
+            self.act = nn.Softmax(dim=4)
         elif act_func == "sigmoid":
             self.act = nn.Sigmoid()
         else:
@@ -206,6 +206,8 @@ class ResNetBasicHead(nn.Module):
         x = torch.cat(pool_out, 1)
         # (N, C, T, H, W) -> (N, T, H, W, C).
         x = x.permute((0, 2, 3, 4, 1))
+        gap = x
+        pre_gap_slow = inputs[0]
         # Perform dropout.
         if hasattr(self, "dropout"):
             x = self.dropout(x)
@@ -217,4 +219,4 @@ class ResNetBasicHead(nn.Module):
             x = x.mean([1, 2, 3])
 
         x = x.view(x.shape[0], -1)
-        return x
+        return x, gap

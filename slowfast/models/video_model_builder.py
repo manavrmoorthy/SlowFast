@@ -390,11 +390,10 @@ class SlowFast(nn.Module):
         x = self.s4_fuse(x)
         x = self.s5(x)
         if self.enable_detection:
-            x = self.head(x, bboxes)
+            x, gap = self.head(x, bboxes)
         else:
-            x = self.head(x)
-        return x
-
+            x, gap = self.head(x)
+        return x, gap
 
 @MODEL_REGISTRY.register()
 class ResNet(nn.Module):

@@ -247,6 +247,8 @@ def pyav_decode(
         timebase = duration / frames_length
         video_start_pts = int(start_idx * timebase)
         video_end_pts = int(end_idx * timebase)
+        # print("#"*30)
+        # print('start time is : {}, end time is : {}'.format(float(video_start_pts*container.streams.video[0].time_base), float(video_end_pts*container.streams.video[0].time_base)))
 
     frames = None
     # If video stream was found, fetch video frames from the video.
@@ -343,6 +345,7 @@ def decode(
         clip_idx if decode_all_video else 0,
         num_clips if decode_all_video else 1,
     )
+
     # Perform temporal sampling from the decoded video.
     frames = temporal_sampling(frames, start_idx, end_idx, num_frames)
     return frames

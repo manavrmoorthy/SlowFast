@@ -130,6 +130,9 @@ class Kinetics(torch.utils.data.Dataset):
                 index of the video replacement that can be decoded.
         """
         short_cycle_idx = None
+        import time
+        ntic = time.time()
+        global_ntic = time.time()
         # When short cycle is used, input index is a tupple.
         if isinstance(index, tuple):
             index, short_cycle_idx = index
@@ -174,6 +177,8 @@ class Kinetics(torch.utils.data.Dataset):
             # The testing is deterministic and no jitter should be performed.
             # min_scale, max_scale, and crop_size are expect to be the same.
             assert len({min_scale, max_scale, crop_size}) == 1
+            print('sampling: ', time.time()-ntic)
+            ntic = time.time()
         else:
             raise NotImplementedError(
                 "Does not support {} mode".format(self.mode)
@@ -192,6 +197,8 @@ class Kinetics(torch.utils.data.Dataset):
                     self.cfg.DATA_LOADER.ENABLE_MULTI_THREAD_DECODE,
                     self.cfg.DATA.DECODING_BACKEND,
                 )
+                print('video container', time.time()-ntic)
+                ntic = time.time()
             except Exception as e:
                 logger.info(
                     "Failed to load video from {} with error {}".format(
@@ -215,6 +222,8 @@ class Kinetics(torch.utils.data.Dataset):
                 backend=self.cfg.DATA.DECODING_BACKEND,
                 max_spatial_scale=max_scale,
             )
+            print('decoding: ', time.time()-ntic)
+            ntic = time.time()
 
             # If decoding failed (wrong format, video is too short, and etc),
             # select another video.
@@ -229,6 +238,8 @@ class Kinetics(torch.utils.data.Dataset):
             # T H W C -> C T H W.
             frames = frames.permute(3, 0, 1, 2)
             # Perform data augmentation.
+            print('normalization and permute: ', time.time()-ntic)
+            ntic = time.time()
             frames = utils.spatial_sampling(
                 frames,
                 spatial_idx=spatial_sample_index,
@@ -238,9 +249,13 @@ class Kinetics(torch.utils.data.Dataset):
                 random_horizontal_flip=self.cfg.DATA.RANDOM_FLIP,
                 inverse_uniform_sampling=self.cfg.DATA.INV_UNIFORM_SAMPLE,
             )
+            print('spatial sampling: ', time.time()-ntic)
+            ntic = time.time()
 
             label = self._labels[index]
             frames = utils.pack_pathway_output(self.cfg, frames)
+
+            print('TOTAL TIME: ', time.time()-global_ntic)
             return frames, label, index, {}
         else:
             raise RuntimeError(
